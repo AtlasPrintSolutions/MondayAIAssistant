@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monday.com AI Agent</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .result-card {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .spinner-border {
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-right: 10px;
+        }
+        .monday-color {
+            color: #ff3d57;
+        }
+        .pre-scrollable {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        .header-logo {
+            height: 50px;
+            margin-right: 10px;
+        }
+        .tab-content {
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+        }
+        .nav-tabs {
+            margin-bottom: 0;
+        }
+        .example-card {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .example-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="d-flex justify-content-center align-items-center">
+                <h1 class="monday-color">Monday.com AI Agent</h1>
+            </div>
+            <p class="text-muted">Create boards, items, and more using natural language</p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-body">
+                        <form id="request-form">
+                            <div class="mb-3">
+                                <label for="user-input" class="form-label">What would you like to create in monday.com?</label>
+                                <textarea class="form-control" id="user-input" rows="3" placeholder="e.g., Create a project management board with status, owner, and due date columns" required></textarea>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="use-langchain" checked>
+                                <label class="form-check-label" for="use-langchain">
+                                    Use LangChain agent (recommended for complex requests)
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="submit-btn">
+                                <span class="spinner-border d-none" id="spinner" role="status"></span>
+                                Generate
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card d-none" id="result-card">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" id="result-tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">Summary</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="false">Details</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="raw-tab" data-bs-toggle="tab" data-bs-target="#raw" type="button" role="tab" aria-controls="raw" aria-selected="false">Raw JSON</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="tab-content" id="result-tabs-content">
+                        <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+                            <div id="summary-content">
+                                <!-- Summary content will be inserted here -->
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="details" role="tabpanel" aria-labelledby="details-tab">
+                            <div id="details-content">
+                                <!-- Details content will be inserted here -->
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="raw" role="tabpanel" aria-labelledby="raw-tab">
+                            <pre class="pre-scrollable" id="raw-content">
+                                <!-- Raw JSON content will be inserted here -->
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <h3 class="text-center monday-color mb-4">Example Requests</h3>
+            </div>
+            <div class="col-md-4">
+                <div class="card example-card" onclick="fillExample(this)">
+                    <div class="card-body">
+                        <h5 class="card-title">Simple Board</h5>
+                        <p class="card-text">Create a task management board with status, assignee, and due date columns</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card example-card" onclick="fillExample(this)">
+                    <div class="card-body">
+                        <h5 class="card-title">Project Board with Groups</h5>
+                        <p class="card-text">Create a project board with planning, execution, and review groups. Add status, owner, timeline, and priority columns</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card example-card" onclick="fillExample(this)">
+                    <div class="card-body">
+                        <h5 class="card-title">Items with Values</h5>
+                        <p class="card-text">Create a board named "Marketing Campaigns" with status, budget, and timeline columns. Add an item called "Q2 Social Media Campaign" with a "Working on it" status</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="monday-color">Memory & History</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" id="memory-tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="creations-tab" data-bs-toggle="tab" data-bs-target="#creations" type="button" role="tab" aria-controls="creations" aria-selected="true">Recent Creations</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="conversations-tab" data-bs-toggle="tab" data-bs-target="#conversations" type="button" role="tab" aria-controls="conversations" aria-selected="false">Conversation History</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content mt-3" id="memory-tabs-content">
+                            <div class="tab-pane fade show active" id="creations" role="tabpanel" aria-labelledby="creations-tab">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <h5>Recently Created Resources</h5>
+                                    <button class="btn btn-sm btn-outline-secondary" id="refresh-creations">Refresh</button>
+                                </div>
+                                <div id="creations-content">
+                                    <div class="d-flex justify-content-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="conversations" role="tabpanel" aria-labelledby="conversations-tab">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <h5>Conversation History</h5>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-secondary me-2" id="refresh-conversations">Refresh</button>
+                                        <button class="btn btn-sm btn-outline-danger" id="clear-memory">Clear Memory</button>
+                                    </div>
+                                </div>
+                                <div id="conversations-content">
+                                    <div class="d-flex justify-content-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load memory data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRecentCreations();
+            loadConversations();
+        });
+        
+        // Form submission event listener
+        document.getElementById('request-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userInput = document.getElementById('user-input').value.trim();
+            const useLangChain = document.getElementById('use-langchain').checked;
+            const submitBtn = document.getElementById('submit-btn');
+            const spinner = document.getElementById('spinner');
+            const resultCard = document.getElementById('result-card');
+            
+            if (!userInput) return;
+            
+            // Show loading
+            submitBtn.disabled = true;
+            spinner.classList.remove('d-none');
+            
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userInput, useLangChain }),
+                });
+                
+                const result = await response.json();
+                
+                // Display result
+                displayResult(result);
+                resultCard.classList.remove('d-none');
+                
+                // Refresh memory data
+                loadRecentCreations();
+                loadConversations();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error processing request. Please try again.');
+            } finally {
+                // Hide loading
+                submitBtn.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        });
+        
+        // Load recent creations
+        async function loadRecentCreations() {
+            try {
+                const response = await fetch('/api/memory/creations');
+                const result = await response.json();
+                
+                const creationsContent = document.getElementById('creations-content');
+                
+                if (result.success && result.creations && result.creations.length > 0) {
+                    creationsContent.innerHTML = `
+                        <div class="list-group">
+                            ${result.creations.map(creation => `
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">${creation.type}: ${creation.name || 'Unnamed'}</h6>
+                                        <small>${formatTimestamp(creation.timestamp)}</small>
+                                    </div>
+                                    <p class="mb-1 small text-muted">ID: ${creation.id}</p>
+                                    <small>From request: "${truncateText(creation.userInput, 50)}"</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    creationsContent.innerHTML = `<p class="text-muted">No recent creations found.</p>`;
+                }
+            } catch (error) {
+                console.error('Error loading creations:', error);
+                document.getElementById('creations-content').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error loading creations: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Load conversations
+        async function loadConversations() {
+            try {
+                const response = await fetch('/api/memory/conversations');
+                const result = await response.json();
+                
+                const conversationsContent = document.getElementById('conversations-content');
+                
+                if (result.success && result.conversations && result.conversations.length > 0) {
+                    conversationsContent.innerHTML = `
+                        <div class="accordion" id="conversationsAccordion">
+                            ${result.conversations.map((conversation, index) => `
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading${index}">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
+                                            <div class="d-flex w-100 justify-content-between align-items-center" style="width: 100%;">
+                                                <span>${truncateText(conversation.userInput, 50)}</span>
+                                                <span class="badge ${conversation.success ? 'bg-success' : 'bg-danger'} ms-2">${conversation.success ? 'Success' : 'Failed'}</span>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" data-bs-parent="#conversationsAccordion">
+                                        <div class="accordion-body">
+                                            <p><strong>Request:</strong> ${conversation.userInput}</p>
+                                            <p><strong>Result:</strong> ${conversation.result.message}</p>
+                                            ${conversation.result.details && conversation.result.details.length > 0 ? `
+                                                <p><strong>Created:</strong></p>
+                                                <ul>
+                                                    ${conversation.result.details.map(detail => `
+                                                        <li>${detail.type}: ${detail.name || detail.title || 'Unnamed'} (ID: ${detail.id})</li>
+                                                    `).join('')}
+                                                </ul>
+                                            ` : ''}
+                                            <small class="text-muted">Timestamp: ${formatTimestamp(conversation.timestamp)}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    conversationsContent.innerHTML = `<p class="text-muted">No conversation history found.</p>`;
+                }
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+                document.getElementById('conversations-content').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error loading conversations: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Clear memory
+        document.getElementById('clear-memory').addEventListener('click', async function() {
+            if (confirm('Are you sure you want to clear all memory? This action cannot be undone.')) {
+                try {
+                    const response = await fetch('/api/memory/clear', {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('Memory cleared successfully!');
+                        loadRecentCreations();
+                        loadConversations();
+                    } else {
+                        alert(`Error: ${result.message}`);
+                    }
+                } catch (error) {
+                    console.error('Error clearing memory:', error);
+                    alert(`Error clearing memory: ${error.message}`);
+                }
+            }
+        });
+        
+        // Refresh buttons
+        document.getElementById('refresh-creations').addEventListener('click', loadRecentCreations);
+        document.getElementById('refresh-conversations').addEventListener('click', loadConversations);
+        
+        // Display result
+        function displayResult(result) {
+            // Summary tab
+            const summaryContent = document.getElementById('summary-content');
+            summaryContent.innerHTML = `
+                <div class="alert ${result.success ? 'alert-success' : 'alert-danger'}" role="alert">
+                    ${result.message}
+                </div>
+            `;
+            
+            // If LangChain agent was used
+            if (result.agentSteps) {
+                summaryContent.innerHTML += `
+                    <h5>Agent Steps:</h5>
+                    <ul class="list-group">
+                        ${result.agentSteps.map(step => `
+                            <li class="list-group-item">
+                                <strong>Tool:</strong> ${step.tool}<br>
+                                <strong>Input:</strong> ${step.input}<br>
+                                <strong>Output:</strong> ${step.output}
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+            }
+            
+            // Details tab
+            const detailsContent = document.getElementById('details-content');
+            
+            if (result.details && result.details.length > 0) {
+                detailsContent.innerHTML = `
+                    <h5>Created Resources:</h5>
+                    <div class="list-group">
+                        ${result.details.map(detail => `
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">${detail.type} (${detail.operation || 'create'})</h5>
+                                    ${detail.id ? `<small>ID: ${detail.id}</small>` : ''}
+                                </div>
+                                ${detail.name ? `<p class="mb-1">Name: ${detail.name}</p>` : ''}
+                                ${detail.title ? `<p class="mb-1">Title: ${detail.title}</p>` : ''}
+                                ${detail.error ? `<p class="text-danger mb-1">Error: ${detail.error}</p>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (result.result) {
+                detailsContent.innerHTML = `
+                    <h5>Result:</h5>
+                    <div class="alert alert-info">
+                        ${result.result}
+                    </div>
+                `;
+            } else {
+                detailsContent.innerHTML = `<p>No detailed information available.</p>`;
+            }
+            
+            // Raw tab
+            const rawContent = document.getElementById('raw-content');
+            rawContent.textContent = JSON.stringify(result, null, 2);
+        }
+        
+        function fillExample(element) {
+            const text = element.querySelector('.card-text').textContent;
+            document.getElementById('user-input').value = text;
+        }
+        
+        // Helper: Format timestamp
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+        
+        // Helper: Truncate text
+        function truncateText(text, maxLength) {
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
+    </script>
+</body>
+</html>

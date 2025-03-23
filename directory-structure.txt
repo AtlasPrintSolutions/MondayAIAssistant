@@ -1,0 +1,57 @@
+# Project Structure
+
+This document outlines the directory structure and files in the Monday.com AI Agent project.
+
+```
+monday-ai-agent/
+├── index.js                # Entry point, handles CLI and server startup
+├── package.json            # Project configuration and dependencies
+├── .env                    # Environment variables (not committed to git)
+├── .env.example            # Example environment variables
+├── .gitignore              # Files to ignore in git
+├── memory.json             # Memory storage (not committed to git)
+├── README.md               # Project overview
+├── IMPLEMENTATION.md       # Implementation guide
+├── LICENSE                 # MIT license
+│
+├── public/                 # Web server static files
+│   ├── index.html          # Main web interface
+│   ├── css/                # CSS stylesheets
+│   │   └── style.css       # Custom styles
+│   ├── js/                 # JavaScript files
+│   │   └── app.js          # Frontend logic
+│   └── favicon.ico         # Website icon
+│
+└── src/                    # Source code
+    ├── agent.js            # Main agent logic
+    ├── llmService.js       # AI model integration
+    ├── memoryService.js    # Memory system
+    ├── mondayClient.js     # Monday.com API client
+    └── server.js           # Express web server
+```
+
+## Key Files
+
+### Core Files
+
+- **index.js**: Main entry point that handles CLI mode and server startup
+- **src/agent.js**: The AI agent that processes natural language requests
+- **src/mondayClient.js**: Client for Monday.com's GraphQL API
+- **src/llmService.js**: Integration with OpenRouter.ai for AI capabilities
+- **src/memoryService.js**: System for storing and retrieving created resources
+- **src/server.js**: Express web server for the web interface
+
+### Web Interface
+
+- **public/index.html**: Main web interface
+- **public/css/style.css**: Custom CSS styles
+- **public/js/app.js**: Frontend JavaScript logic
+
+### Configuration
+
+- **.env**: Environment variables (API keys, configuration)
+- **package.json**: Project dependencies and scripts
+
+## Getting Started
+
+See the README.md and IMPLEMENTATION.md files for instructions on setting up and running the project.
